@@ -238,7 +238,10 @@ def cmd_finalize(args) -> int:
                      f"custom 'WxH' size (inches). Valid presets: {list(SIZES[orientation])}")
         size_set = resolved
 
-    piece_dir = os.path.join(run_dir, slugify(title))
+    # "slug" lets the caller disambiguate two pieces that share a title (e.g. two
+    # candidates from the same n=2 batch often get the same drafted title) instead
+    # of both silently writing into the same folder; falls back to slugify(title).
+    piece_dir = os.path.join(run_dir, piece.get("slug") or slugify(title))
     prints_dir = os.path.join(piece_dir, "prints")
     os.makedirs(prints_dir, exist_ok=True)
 
@@ -267,7 +270,7 @@ def cmd_finalize(args) -> int:
         f.write(piece.get("prompt", "") + "\n")
     meta = {
         "title": title,
-        "slug": slugify(title),
+        "slug": os.path.basename(piece_dir),
         "orientation": orientation,
         "sizes": list(size_set),
         "model": piece.get("model", ""),

@@ -1,4 +1,4 @@
-import { existsSync, mkdirSync, readdirSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { NextResponse } from "next/server";
 import { ARTWORK_PY, PROJECT_ROOT, runDirFor } from "@/lib/artwork-paths";
@@ -42,9 +42,33 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: `Source candidate not found: ${candidateFile}` }, { status: 404 });
   }
 
+  const piecesDir = path.join(runDir, "_pieces");
+  mkdirSync(piecesDir, { recursive: true });
+
+  // Two different keepers can end up with the same (or same-slugifying) title --
+  // e.g. two candidates from the same n=2 variation batch share an identical prompt,
+  // so "Draft Title + SEO" often proposes the same title for both. Without this
+  // check, the second finalize would silently overwrite the first piece's folder.
+  let pieceSlug = slugify(title);
+  let pieceJsonPath = path.join(piecesDir, `${pieceSlug}.json`);
+  if (existsSync(pieceJsonPath)) {
+    try {
+      const existing = JSON.parse(readFileSync(pieceJsonPath, "utf-8"));
+      if (existing.source_image && existing.source_image !== sourceRel) {
+        let n = 2;
+        while (existsSync(path.join(piecesDir, `${pieceSlug}-${n}.json`))) n++;
+        pieceSlug = `${pieceSlug}-${n}`;
+        pieceJsonPath = path.join(piecesDir, `${pieceSlug}.json`);
+      }
+    } catch {
+      // unreadable/corrupt _pieces record — fall through and just overwrite it
+    }
+  }
+
   const piece = {
     run_dir: runDirRel,
     title,
+    slug: pieceSlug,
     source_image: sourceRel,
     orientation,
     sizes,
@@ -53,11 +77,6 @@ export async function POST(req: Request) {
     upscale: 4,
     seo: { title: seo.title, tags: seo.tags, description: seo.description },
   };
-
-  const piecesDir = path.join(runDir, "_pieces");
-  mkdirSync(piecesDir, { recursive: true });
-  const pieceSlug = slugify(title);
-  const pieceJsonPath = path.join(piecesDir, `${pieceSlug}.json`);
   writeFileSync(pieceJsonPath, JSON.stringify(piece, null, 2));
 
   const result = await runPython(ARTWORK_PY, ["finalize", pieceJsonPath]);

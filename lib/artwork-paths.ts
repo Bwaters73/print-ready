@@ -46,6 +46,15 @@ export function candidatesDirFor(slug: string): string {
   return path.join(runDirFor(slug), "_candidates");
 }
 
+export function refsDirFor(slug: string): string {
+  return path.join(runDirFor(slug), "_refs");
+}
+
+/** PROJECT_ROOT-relative path (forward slashes), suitable for --ref args passed to generate.py. */
+export function toProjectRelative(absolutePath: string): string {
+  return path.relative(PROJECT_ROOT, absolutePath).split(path.sep).join("/");
+}
+
 /** Guard against path traversal: resolved path must live inside RUNS_ROOT. */
 export function isInsideRunsRoot(resolved: string): boolean {
   const rel = path.relative(RUNS_ROOT, resolved);

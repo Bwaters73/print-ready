@@ -1,7 +1,7 @@
 import { mkdirSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { NextResponse } from "next/server";
-import { candidatesDirFor } from "@/lib/artwork-paths";
+import { candidatesDirFor, refsDirFor, toProjectRelative } from "@/lib/artwork-paths";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -35,6 +35,7 @@ export async function POST(req: Request) {
     const runSlug = form.get("runSlug");
     const labelRaw = form.get("label");
     const file = form.get("file");
+    const kind = form.get("kind") === "ref" ? "ref" : "candidate";
 
     if (typeof runSlug !== "string" || !runSlug) {
       return NextResponse.json({ error: "Missing runSlug." }, { status: 400 });
@@ -56,13 +57,14 @@ export async function POST(req: Request) {
     const label = (typeof labelRaw === "string" && labelRaw.trim()) || "custom";
     const safeLabel = label.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 48) || "custom";
 
-    const dir = candidatesDirFor(runSlug);
+    const dir = kind === "ref" ? refsDirFor(runSlug) : candidatesDirFor(runSlug);
     mkdirSync(dir, { recursive: true });
     const filename = `${Date.now()}_${safeLabel}${ext}`;
+    const filePath = path.join(dir, filename);
     const bytes = Buffer.from(await file.arrayBuffer());
-    writeFileSync(path.join(dir, filename), bytes);
+    writeFileSync(filePath, bytes);
 
-    return NextResponse.json({ file: filename });
+    return NextResponse.json({ file: filename, path: toProjectRelative(filePath) });
   } catch (err) {
     return NextResponse.json(
       { error: `Upload failed: ${err instanceof Error ? err.message : "unknown error"}` },

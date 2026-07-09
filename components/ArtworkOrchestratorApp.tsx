@@ -88,6 +88,10 @@ export default function ArtworkOrchestratorApp() {
   const [nPerVariation, setNPerVariation] = useState(2);
   const [model, setModel] = useState("nano-banana-pro");
 
+  const [refImage, setRefImage] = useState<{ file: string; path: string } | null>(null);
+  const [refUploading, setRefUploading] = useState(false);
+  const [refError, setRefError] = useState<string | null>(null);
+
   const [generating, setGenerating] = useState(false);
   const [genStatus, setGenStatus] = useState<Record<string, GenStatus>>({});
   const [genError, setGenError] = useState<Record<string, string>>({});
@@ -183,6 +187,35 @@ export default function ArtworkOrchestratorApp() {
     }
   }
 
+  async function handleUploadRef(file: File) {
+    if (!draft) return;
+    setRefUploading(true);
+    setRefError(null);
+    try {
+      const form = new FormData();
+      form.append("file", file);
+      form.append("runSlug", draft.runSlug);
+      form.append("label", "reference");
+      form.append("kind", "ref");
+      const res = await fetch("/api/artwork/upload", { method: "POST", body: form });
+      const data = await parseJsonResponse(res);
+      if (!res.ok) {
+        setRefError(data.error || "Upload failed.");
+        return;
+      }
+      setRefImage({ file: data.file, path: data.path });
+    } catch (err) {
+      setRefError(err instanceof Error ? err.message : "Network error.");
+    } finally {
+      setRefUploading(false);
+    }
+  }
+
+  function handleRemoveRef() {
+    setRefImage(null);
+    setRefError(null);
+  }
+
   async function handleDraft(e: React.FormEvent) {
     e.preventDefault();
     if (!concept.trim() || drafting) return;
@@ -192,6 +225,8 @@ export default function ArtworkOrchestratorApp() {
     setCandidates([]);
     setKeepers({});
     setIndexDone(false);
+    setRefImage(null);
+    setRefError(null);
     try {
       const res = await fetch("/api/artwork/draft-prompts", {
         method: "POST",
@@ -230,7 +265,7 @@ export default function ArtworkOrchestratorApp() {
           runSlug: draft.runSlug,
           label: key,
           prompt: prompts[key] ?? variation.prompt,
-          refs: variation.refs,
+          refs: refImage ? [...variation.refs, refImage.path] : variation.refs,
           orientation: draft.orientation,
           n: nPerVariation,
           model,
@@ -490,6 +525,12 @@ export default function ArtworkOrchestratorApp() {
           genError={genError}
           onGenerate={handleGenerateSelected}
           onRegenerate={generateOne}
+          refImage={refImage}
+          refUploading={refUploading}
+          refError={refError}
+          onUploadRef={handleUploadRef}
+          onRemoveRef={handleRemoveRef}
+          runSlug={draft.runSlug}
         />
       )}
 
@@ -713,6 +754,12 @@ function VariationsPanel({
   genError,
   onGenerate,
   onRegenerate,
+  refImage,
+  refUploading,
+  refError,
+  onUploadRef,
+  onRemoveRef,
+  runSlug,
 }: {
   draft: DraftPromptsResult;
   selected: Record<VariationKey, boolean>;
@@ -728,6 +775,12 @@ function VariationsPanel({
   genError: Record<string, string>;
   onGenerate: () => void;
   onRegenerate: (key: VariationKey) => void;
+  refImage: { file: string; path: string } | null;
+  refUploading: boolean;
+  refError: string | null;
+  onUploadRef: (file: File) => void;
+  onRemoveRef: () => void;
+  runSlug: string;
 }) {
   const anySelected = draft.variations.some((v) => selected[v.key]);
   return (
@@ -737,6 +790,50 @@ function VariationsPanel({
         <span className="rule flex-1 mb-1" />
         <span className="label">{draft.orientation}</span>
       </div>
+
+      <div className="paper px-5 py-4 mb-6 flex items-center gap-5">
+        {refImage ? (
+          <>
+            <img
+              src={imageUrl(runSlug, `_refs/${refImage.file}`)}
+              alt="Reference"
+              className="w-16 h-16 object-cover border border-ink/20"
+            />
+            <div className="flex-1">
+              <div className="label mb-1">Reference image attached</div>
+              <p className="marginalia">Applied to every variation you generate below.</p>
+            </div>
+            <button type="button" onClick={onRemoveRef} className="ghost-btn">
+              Remove
+            </button>
+          </>
+        ) : (
+          <>
+            <div className="flex-1">
+              <div className="label mb-1">Reference image (optional)</div>
+              <p className="marginalia">
+                Upload an image for the model to match — composition, palette, subject. Applied to
+                every variation you generate.
+              </p>
+            </div>
+            <label className="ghost-btn inline-flex cursor-pointer shrink-0">
+              {refUploading ? "Uploading…" : "Upload reference"}
+              <input
+                type="file"
+                accept="image/png,image/jpeg"
+                disabled={refUploading}
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) onUploadRef(file);
+                  e.target.value = "";
+                }}
+                className="hidden"
+              />
+            </label>
+          </>
+        )}
+      </div>
+      {refError && <p className="marginalia text-terra mb-6">{refError}</p>}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-8">
         {draft.variations.map((v) => {

@@ -106,9 +106,25 @@ def upscale(src: str, dst: str, factor: int = 4) -> None:
     models = os.path.join(os.path.dirname(os.path.abspath(binpath)), "models")
     if os.path.isdir(models):
         cmd += ["-m", models]
-    proc = subprocess.run(cmd, capture_output=True, text=True)
-    if proc.returncode != 0 or not os.path.exists(dst):
-        raise RuntimeError(f"Upscale failed (cmd: {' '.join(cmd)}):\n{proc.stderr or proc.stdout}")
+
+    last_err = None
+    for attempt in range(1, 4):
+        proc = subprocess.run(cmd, capture_output=True, text=True)
+        if proc.returncode != 0 or not os.path.exists(dst):
+            last_err = RuntimeError(f"Upscale failed (cmd: {' '.join(cmd)}):\n{proc.stderr or proc.stdout}")
+            continue
+        # The upscaler binary has occasionally produced a truncated/unreadable file on
+        # the first pass (seen on Windows; exact cause unconfirmed, antivirus scanning
+        # the freshly-written file is one suspect) — a retry has reliably produced a
+        # good file when this happens, so verify before trusting the output.
+        try:
+            with Image.open(dst) as check:
+                check.load()
+            return
+        except Exception as e:
+            last_err = RuntimeError(f"Upscale produced an unreadable image (attempt {attempt}/3): {e}")
+            continue
+    raise last_err
 
 
 def center_crop_resize(img: "Image.Image", w_px: int, h_px: int) -> "Image.Image":

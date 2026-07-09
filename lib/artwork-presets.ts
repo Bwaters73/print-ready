@@ -8,6 +8,15 @@ export const NO_TEXT_SPINE =
   "no picture frame, no mat, no border, no wall, no room, no mockup, high detail, no text, " +
   "no watermark, no signature";
 
+// Appended whenever a user-uploaded reference image is attached (Variations panel),
+// so the model treats it as a style/technique guide and never reproduces its
+// specific subject/content — same anti-content-guard pattern as HOUSE_STYLE below.
+export const USER_REF_STYLE_GUARD =
+  "Use the attached reference image ONLY as a style and technique guide — match its art style, " +
+  "palette, linework, texture, lighting, and rendering technique. Do NOT reproduce the reference " +
+  "image's specific subject, objects, or composition; render the requested subject only, as a new " +
+  "and different image in that style.";
+
 export const HOUSE_STYLE = {
   name: "Plein-air tonal oil",
   description:

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Shell from "./Shell";
-import { MODELS, SIZES } from "@/lib/artwork-presets";
+import { MODELS, SIZES, USER_REF_STYLE_GUARD } from "@/lib/artwork-presets";
 import type {
   Candidate,
   DraftPromptsResult,
@@ -258,13 +258,15 @@ export default function ArtworkOrchestratorApp() {
     setGenStatus((s) => ({ ...s, [key]: "pending" }));
     setGenError((s) => ({ ...s, [key]: "" }));
     try {
+      const basePrompt = prompts[key] ?? variation.prompt;
+      const prompt = refImage ? `${basePrompt} — ${USER_REF_STYLE_GUARD}` : basePrompt;
       const res = await fetch("/api/artwork/generate", {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
           runSlug: draft.runSlug,
           label: key,
-          prompt: prompts[key] ?? variation.prompt,
+          prompt,
           refs: refImage ? [...variation.refs, refImage.path] : variation.refs,
           orientation: draft.orientation,
           n: nPerVariation,
@@ -801,7 +803,10 @@ function VariationsPanel({
             />
             <div className="flex-1">
               <div className="label mb-1">Reference image attached</div>
-              <p className="marginalia">Applied to every variation you generate below.</p>
+              <p className="marginalia">
+                Style-only guide for every variation below — matches its palette, texture, and
+                technique, but always renders a new, different image, not a copy of its content.
+              </p>
             </div>
             <button type="button" onClick={onRemoveRef} className="ghost-btn">
               Remove
@@ -812,8 +817,9 @@ function VariationsPanel({
             <div className="flex-1">
               <div className="label mb-1">Reference image (optional)</div>
               <p className="marginalia">
-                Upload an image for the model to match — composition, palette, subject. Applied to
-                every variation you generate.
+                Upload an image for the model to match as a style guide only — palette, texture,
+                technique. It will not copy the reference&rsquo;s subject or content; every variation
+                still renders your concept, newly.
               </p>
             </div>
             <label className="ghost-btn inline-flex cursor-pointer shrink-0">

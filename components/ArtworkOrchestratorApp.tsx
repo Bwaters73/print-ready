@@ -275,7 +275,8 @@ export default function ArtworkOrchestratorApp() {
     if (!draft) return;
     updateKeeper(file, { draftingSeo: true, seoError: null });
     try {
-      const usedPrompt = prompts[candidateLabel] ?? draft.variations.find((v) => v.key === candidateLabel)?.prompt ?? concept;
+      const usedPrompt =
+        prompts[candidateLabel] || draft.variations.find((v) => v.key === candidateLabel)?.prompt || concept;
       const res = await fetch("/api/artwork/draft-seo", {
         method: "POST",
         headers: { "content-type": "application/json" },
@@ -308,7 +309,10 @@ export default function ArtworkOrchestratorApp() {
             .map(([k]) => k);
     const candidateLabel = candidates.find((c) => c.file === file)?.label ?? "faithful";
     const usedPrompt =
-      prompts[candidateLabel] ?? draft.variations.find((v) => v.key === candidateLabel)?.prompt ?? "";
+      prompts[candidateLabel] ||
+      draft.variations.find((v) => v.key === candidateLabel)?.prompt ||
+      concept ||
+      "(no prompt — user-supplied image)";
     try {
       const res = await fetch("/api/artwork/finalize", {
         method: "POST",

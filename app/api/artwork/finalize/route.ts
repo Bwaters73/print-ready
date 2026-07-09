@@ -26,9 +26,12 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Invalid JSON body." }, { status: 400 });
   }
 
-  const { runSlug, title, candidateFile, orientation, model, prompt, seo } = body;
+  const { runSlug, title, candidateFile, orientation, model, seo } = body;
   const sizes = body.sizes ?? "all";
-  if (!runSlug || !title || !candidateFile || !orientation || !prompt || !seo) {
+  // prompt is descriptive metadata only (written to prompt.txt/meta.json) — a
+  // Bring Your Own Image piece legitimately has none, so it's optional here.
+  const prompt = body.prompt || "(no prompt — user-supplied image)";
+  if (!runSlug || !title || !candidateFile || !orientation || !seo) {
     return NextResponse.json({ error: "Missing required piece fields." }, { status: 400 });
   }
 

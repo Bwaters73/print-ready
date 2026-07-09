@@ -19,6 +19,9 @@ type KeeperState = {
   seo: SeoDraft | null;
   sizesMode: "all" | "custom";
   customSizes: Record<string, boolean>;
+  extraSizes: string[]; // manually-added "WxH" (inches) sizes, on top of the presets
+  customSizeDraft: string; // pending text in the "add a size" input
+  sizeError: string | null;
   draftingSeo: boolean;
   seoError: string | null;
   finalizing: boolean;
@@ -39,6 +42,9 @@ function defaultKeeper(): KeeperState {
     seo: null,
     sizesMode: "all",
     customSizes: {},
+    extraSizes: [],
+    customSizeDraft: "",
+    sizeError: null,
     draftingSeo: false,
     seoError: null,
     finalizing: false,
@@ -271,6 +277,33 @@ export default function ArtworkOrchestratorApp() {
     setKeepers((prev) => (prev[file] ? { ...prev, [file]: { ...prev[file], ...patch } } : prev));
   }
 
+  function handleAddCustomSize(file: string) {
+    const keeper = keepers[file];
+    if (!keeper) return;
+    const raw = keeper.customSizeDraft.trim();
+    const m = raw.match(/^(\d+(?:\.\d+)?)\s*x\s*(\d+(?:\.\d+)?)$/i);
+    if (!m) {
+      updateKeeper(file, { sizeError: "Enter a size like 16x20 (width x height, in inches)." });
+      return;
+    }
+    const w = Number(m[1]);
+    const h = Number(m[2]);
+    if (w <= 0 || h <= 0 || w > 100 || h > 100) {
+      updateKeeper(file, { sizeError: "Width and height must be between 0 and 100 inches." });
+      return;
+    }
+    const normalized = `${m[1]}x${m[2]}`;
+    if (keeper.extraSizes.includes(normalized)) {
+      updateKeeper(file, { sizeError: `${normalized} is already added.`, customSizeDraft: "" });
+      return;
+    }
+    updateKeeper(file, {
+      extraSizes: [...keeper.extraSizes, normalized],
+      customSizeDraft: "",
+      sizeError: null,
+    });
+  }
+
   async function handleDraftSeo(file: string, candidateLabel: string) {
     if (!draft) return;
     updateKeeper(file, { draftingSeo: true, seoError: null });
@@ -301,12 +334,18 @@ export default function ArtworkOrchestratorApp() {
     const keeper = keepers[file];
     if (!keeper || !keeper.title.trim() || !keeper.seo) return;
     updateKeeper(file, { finalizing: true, finalizeError: null });
-    const sizes =
+    const baseSizes =
       keeper.sizesMode === "all"
-        ? "all"
+        ? Object.keys(SIZES[draft.orientation])
         : Object.entries(keeper.customSizes)
             .filter(([, v]) => v)
             .map(([k]) => k);
+    const sizes: "all" | string[] =
+      keeper.extraSizes.length > 0
+        ? [...baseSizes, ...keeper.extraSizes]
+        : keeper.sizesMode === "all"
+          ? "all"
+          : baseSizes;
     const candidateLabel = candidates.find((c) => c.file === file)?.label ?? "faithful";
     const usedPrompt =
       prompts[candidateLabel] ||
@@ -463,6 +502,7 @@ export default function ArtworkOrchestratorApp() {
           onUpdate={updateKeeper}
           onDraftSeo={handleDraftSeo}
           onFinalize={handleFinalize}
+          onAddCustomSize={handleAddCustomSize}
           orientation={draft.orientation}
         />
       )}
@@ -800,6 +840,7 @@ function ReviewGallery({
   onUpdate,
   onDraftSeo,
   onFinalize,
+  onAddCustomSize,
   orientation,
 }: {
   runSlug: string;
@@ -809,6 +850,7 @@ function ReviewGallery({
   onUpdate: (file: string, patch: Partial<KeeperState>) => void;
   onDraftSeo: (file: string, label: string) => void;
   onFinalize: (file: string) => void;
+  onAddCustomSize: (file: string) => void;
   orientation: Orientation;
 }) {
   const sizeOptions = Object.keys(SIZES[orientation]);
@@ -940,6 +982,47 @@ function ReviewGallery({
                           ))}
                         </div>
                       )}
+
+                      {keeper.extraSizes.length > 0 && (
+                        <div className="flex flex-wrap gap-2 mt-2">
+                          {keeper.extraSizes.map((s) => (
+                            <span key={s} className="label flex items-center gap-1 border border-ink/20 px-2 py-1">
+                              {s}
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  onUpdate(c.file, { extraSizes: keeper.extraSizes.filter((x) => x !== s) })
+                                }
+                                className="text-terra hover:text-ink"
+                                aria-label={`Remove ${s}`}
+                              >
+                                ×
+                              </button>
+                            </span>
+                          ))}
+                        </div>
+                      )}
+
+                      <div className="flex items-center gap-2 mt-2">
+                        <input
+                          type="text"
+                          value={keeper.customSizeDraft}
+                          onChange={(e) => onUpdate(c.file, { customSizeDraft: e.target.value })}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") {
+                              e.preventDefault();
+                              onAddCustomSize(c.file);
+                            }
+                          }}
+                          placeholder="16x20"
+                          className="w-24 paper-cool rounded-none px-3 py-1.5 body-serif text-[13px] text-ink placeholder:text-ink-dim focus:outline-none focus:ring-1 focus:ring-ink/30"
+                        />
+                        <button type="button" onClick={() => onAddCustomSize(c.file)} className="ghost-btn">
+                          + Add size
+                        </button>
+                        <span className="marginalia">inches, e.g. 16x20</span>
+                      </div>
+                      {keeper.sizeError && <p className="marginalia text-terra mt-1">{keeper.sizeError}</p>}
                     </div>
 
                     {keeper.seoError && <p className="marginalia text-terra">{keeper.seoError}</p>}

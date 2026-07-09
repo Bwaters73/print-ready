@@ -193,6 +193,18 @@ def _write_seo(piece_dir: str, title: str, seo: dict) -> None:
         json.dump({"title": seo_title, "tags": tags, "description": desc}, f, indent=2)
 
 
+def parse_custom_size(spec: str):
+    """Parse a 'WxH' custom size spec (inches, e.g. '16x20') into (name, (w, h)),
+    or None if spec doesn't match that shape."""
+    m = re.match(r"^(\d+(?:\.\d+)?)\s*x\s*(\d+(?:\.\d+)?)$", spec.strip(), re.IGNORECASE)
+    if not m:
+        return None
+    w, h = float(m.group(1)), float(m.group(2))
+    if w <= 0 or h <= 0 or w > 100 or h > 100:
+        return None
+    return spec.strip(), (w, h)
+
+
 def cmd_finalize(args) -> int:
     with open(args.piece, encoding="utf-8") as f:
         piece = json.load(f)
@@ -211,11 +223,20 @@ def cmd_finalize(args) -> int:
 
     size_set = SIZES[orientation]
     if want != "all":
-        missing = [s for s in want if s not in size_set]
-        if missing:
-            sys.exit(f"ERROR: sizes {missing} not valid for {orientation}. "
-                     f"Valid: {list(size_set)}")
-        size_set = {k: size_set[k] for k in want}
+        resolved, invalid = {}, []
+        for s in want:
+            if s in size_set:
+                resolved[s] = size_set[s]
+                continue
+            custom = parse_custom_size(s)
+            if custom:
+                resolved[custom[0]] = custom[1]
+            else:
+                invalid.append(s)
+        if invalid:
+            sys.exit(f"ERROR: sizes {invalid} not valid for {orientation} and not parseable as a "
+                     f"custom 'WxH' size (inches). Valid presets: {list(SIZES[orientation])}")
+        size_set = resolved
 
     piece_dir = os.path.join(run_dir, slugify(title))
     prints_dir = os.path.join(piece_dir, "prints")

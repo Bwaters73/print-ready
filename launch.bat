@@ -4,6 +4,13 @@ title Print Ready
 
 cd /d "%~dp0"
 
+REM ---- Free port 3100 in case a previous run's server didn't fully shut down ----
+REM (a leftover process here would keep serving a stale build, causing confusing
+REM  errors that look like something else is wrong)
+for /f "tokens=5" %%p in ('netstat -ano ^| findstr ":3100" ^| findstr "LISTENING"') do (
+  taskkill /F /PID %%p >nul 2>&1
+)
+
 REM ---- Always rebuild so the app never runs on stale code ----
 echo.
 echo === Building latest version — this takes about 30 seconds ===

@@ -21,7 +21,7 @@ export async function POST(req: Request) {
     );
   }
 
-  let body: { concept?: string };
+  let body: { concept?: string; wildcardPreset?: string };
   try {
     body = await req.json();
   } catch {
@@ -36,6 +36,11 @@ export async function POST(req: Request) {
   const settings = loadArtworkSettings();
   const houseStyle = settings.houseStyle;
   const wildcardPresets = settings.wildcardPresets;
+
+  // If the user picked a specific wildcard style up front, pin the tool schema's enum
+  // to just that one so Claude always returns it (instead of choosing on its own).
+  const forcedPreset = wildcardPresets.find((p) => p.name === body.wildcardPreset);
+  const presetNamesForTool = forcedPreset ? [forcedPreset.name] : wildcardPresets.map((p) => p.name);
 
   try {
     const response = await createWithRetry(client, {
@@ -52,7 +57,7 @@ export async function POST(req: Request) {
           cache_control: { type: "ephemeral" },
         },
       ],
-      tools: [buildDraftVariationsTool(wildcardPresets.map((p) => p.name))],
+      tools: [buildDraftVariationsTool(presetNamesForTool)],
       tool_choice: { type: "tool", name: "submit_variations" },
       messages: [{ role: "user", content: `Concept: ${concept}` }],
     });

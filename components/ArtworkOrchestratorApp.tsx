@@ -77,6 +77,7 @@ export default function ArtworkOrchestratorApp() {
   const [pastRuns, setPastRuns] = useState<RunSummary[]>([]);
 
   const [concept, setConcept] = useState("");
+  const [wildcardChoice, setWildcardChoice] = useState(""); // "" = let Claude choose
   const [drafting, setDrafting] = useState(false);
   const [draftError, setDraftError] = useState<string | null>(null);
   const [draft, setDraft] = useState<DraftPromptsResult | null>(null);
@@ -298,7 +299,10 @@ export default function ArtworkOrchestratorApp() {
       const res = await fetch("/api/artwork/draft-prompts", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ concept: concept.trim() }),
+        body: JSON.stringify({
+          concept: concept.trim(),
+          wildcardPreset: wildcardChoice || undefined,
+        }),
       });
       const data = await parseJsonResponse(res);
       if (!res.ok) {
@@ -556,6 +560,22 @@ export default function ArtworkOrchestratorApp() {
             One concept you already have in mind. Claude drafts three rendering directions — faithful,
             the house signature style, and a wildcard — for you to pick from before anything generates.
           </p>
+        </div>
+        <div className="col-span-12 lg:col-span-8">
+          <label className="label block mb-2" htmlFor="wildcard-choice">
+            Wildcard style
+          </label>
+          <select
+            id="wildcard-choice"
+            value={wildcardChoice}
+            onChange={(e) => setWildcardChoice(e.target.value)}
+            className="w-full paper rounded-none px-4 py-3 body-serif text-[14px] text-ink focus:outline-none focus:ring-1 focus:ring-ink/30"
+          >
+            <option value="">Let Claude choose (surprise me)</option>
+            {(styleDraft?.wildcardPresets ?? []).map((p) => (
+              <option key={p.name} value={p.name}>{p.name}</option>
+            ))}
+          </select>
         </div>
         <div className="col-span-12 lg:col-span-4 flex flex-col gap-4 pt-7">
           <button

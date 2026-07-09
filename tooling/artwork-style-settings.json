@@ -1,0 +1,50 @@
+{
+  "houseStyle": {
+    "name": "Plein-air tonal oil",
+    "description": "painted as a small late-19th-century plein-air oil sketch on panel — somber muted tonal palette of olive green, ochre, slate grey, umber and warm stone, soft grey overcast sky, heavy textured impasto and visible directional palette-knife strokes, low contrast, restrained and atmospheric, antique muted panel finish",
+    "antiContentGuard": "",
+    "refs": []
+  },
+  "wildcardPresets": [
+    {
+      "name": "Japandi",
+      "layer": "matte minimalist, warm neutral palette (oatmeal, clay, soft black), negative space, natural light, fine grain, calm"
+    },
+    {
+      "name": "Vintage botanical",
+      "layer": "antique lithograph / engraving style, aged parchment tones, precise linework, muted sage & sepia, subtle foxing"
+    },
+    {
+      "name": "Mid-century abstract",
+      "layer": "bold geometric shapes, 1950s palette (mustard, teal, burnt orange, cream), flat matte color, clean hard edges"
+    },
+    {
+      "name": "Moody coastal",
+      "layer": "soft fog, low-contrast desaturated blue-greys, atmospheric depth, film-grain, quiet horizon"
+    },
+    {
+      "name": "Scandinavian line",
+      "layer": "single-weight continuous line art, off-white ground, charcoal line, airy, lots of breathing room"
+    },
+    {
+      "name": "Dark academia",
+      "layer": "oil-painting richness, deep umbers and forest greens, chiaroscuro lighting, classical, aged varnish"
+    },
+    {
+      "name": "Desert modern",
+      "layer": "warm terracotta & sand, high sun, long soft shadows, organic curves, sun-bleached matte finish"
+    },
+    {
+      "name": "Dreamy pastel",
+      "layer": "soft gradients, blush/lavender/mint, gentle bloom, low contrast, ethereal"
+    },
+    {
+      "name": "Bold graphic",
+      "layer": "high-contrast poster style, limited 3-color palette, strong silhouette, screen-print texture"
+    },
+    {
+      "name": "Watercolor",
+      "layer": "Traditional watercolor painting with transparent layers of hand-applied pigments, soft flowing washes, delicate color transitions, subtle wet-on-wet blending, expressive brushstrokes, organic paint blooms, feathered edges, natural granulation, and visible cold-pressed watercolor paper texture. The artwork has luminous colors created through transparent glazing rather than opaque paint, producing a light, airy, handcrafted appearance with soft atmospheric depth and gentle imperfections."
+    }
+  ]
+}

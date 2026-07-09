@@ -1,28 +1,16 @@
 import "@/lib/load-env";
-import { existsSync } from "node:fs";
 import Anthropic from "@anthropic-ai/sdk";
 import { NextResponse } from "next/server";
 import { createWithRetry } from "@/lib/with-retry";
 import { DRAFT_VARIATIONS_TOOL } from "@/lib/artwork-tool-schema";
-import { HOUSE_STYLE, NO_TEXT_SPINE, QUICK_PRESETS, slugify } from "@/lib/artwork-presets";
-import { runDirFor } from "@/lib/artwork-paths";
+import { HOUSE_STYLE, NO_TEXT_SPINE, QUICK_PRESETS } from "@/lib/artwork-presets";
+import { uniqueSlug } from "@/lib/artwork-run";
 import type { DraftPromptsResult, Orientation, VariationKey } from "@/lib/artwork-types";
 
 export const runtime = "nodejs";
 export const maxDuration = 120;
 
 const MODEL = process.env.ANTHROPIC_MODEL || "claude-sonnet-4-6";
-
-function uniqueSlug(concept: string): string {
-  const base = slugify(concept);
-  let slug = base;
-  let n = 2;
-  while (existsSync(runDirFor(slug))) {
-    slug = `${base}-${n}`;
-    n += 1;
-  }
-  return slug;
-}
 
 export async function POST(req: Request) {
   if (!process.env.ANTHROPIC_API_KEY) {

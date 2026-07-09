@@ -5,7 +5,7 @@ import { candidatesDirFor } from "@/lib/artwork-paths";
 export const runtime = "nodejs";
 
 function labelFor(filename: string): string {
-  const stem = filename.replace(/\.png$/i, "");
+  const stem = filename.replace(/\.(png|jpe?g)$/i, "");
   const after = stem.includes("_") ? stem.split("_").slice(1).join("_") : stem;
   return after.split("-")[0] || "candidate";
 }
@@ -17,7 +17,7 @@ export async function GET(req: Request) {
   const dir = candidatesDirFor(run);
   if (!existsSync(dir)) return NextResponse.json({ candidates: [] });
 
-  const files = readdirSync(dir).filter((f) => f.toLowerCase().endsWith(".png"));
+  const files = readdirSync(dir).filter((f) => /\.(png|jpe?g)$/i.test(f));
   const candidates = files
     .map((file) => ({ file, label: labelFor(file) }))
     .sort((a, b) => a.file.localeCompare(b.file));

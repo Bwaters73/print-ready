@@ -79,6 +79,11 @@ export default function ArtworkOrchestratorApp() {
   const [indexError, setIndexError] = useState<string | null>(null);
   const [indexDone, setIndexDone] = useState(false);
 
+  const [byoTitle, setByoTitle] = useState("");
+  const [byoOrientation, setByoOrientation] = useState<Orientation>("portrait");
+  const [byoUploading, setByoUploading] = useState(false);
+  const [byoError, setByoError] = useState<string | null>(null);
+
   useEffect(() => {
     fetch("/api/artwork/preflight").then((r) => r.json()).then(setPreflight).catch(() => {});
     refreshPastRuns();
@@ -95,6 +100,67 @@ export default function ArtworkOrchestratorApp() {
     const res = await fetch(`/api/artwork/candidates?run=${encodeURIComponent(runSlug)}`);
     const data = await res.json();
     setCandidates(data.candidates ?? []);
+  }
+
+  async function handleByoFiles(files: File[]) {
+    if (!files.length || byoUploading) return;
+    setByoError(null);
+
+    let runSlug = draft?.runSlug;
+    const orientation = draft?.orientation ?? byoOrientation;
+
+    if (!runSlug) {
+      if (!byoTitle.trim()) {
+        setByoError("Give this run a title first.");
+        return;
+      }
+      setByoUploading(true);
+      try {
+        const res = await fetch("/api/artwork/start-run", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ concept: byoTitle.trim(), orientation: byoOrientation }),
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          setByoError(data.error || "Could not start a run.");
+          setByoUploading(false);
+          return;
+        }
+        runSlug = data.runSlug as string;
+        setDraft({ runSlug, orientation: data.orientation, variations: [] });
+        setConcept(byoTitle.trim());
+        setCandidates([]);
+        setKeepers({});
+        setIndexDone(false);
+      } catch (err) {
+        setByoError(err instanceof Error ? err.message : "Network error.");
+        setByoUploading(false);
+        return;
+      }
+    } else {
+      setByoUploading(true);
+    }
+
+    try {
+      for (const file of files) {
+        const form = new FormData();
+        form.append("file", file);
+        form.append("runSlug", runSlug);
+        form.append("label", "custom");
+        const res = await fetch("/api/artwork/upload", { method: "POST", body: form });
+        const data = await res.json();
+        if (!res.ok) {
+          setByoError(data.error || `Upload failed for ${file.name}.`);
+        }
+      }
+      await refreshCandidates(runSlug);
+      setByoTitle("");
+    } catch (err) {
+      setByoError(err instanceof Error ? err.message : "Network error.");
+    } finally {
+      setByoUploading(false);
+    }
   }
 
   async function handleDraft(e: React.FormEvent) {
@@ -340,7 +406,18 @@ export default function ArtworkOrchestratorApp() {
         </div>
       )}
 
-      {draft && (
+      <ByoPanel
+        hasRun={!!draft}
+        title={byoTitle}
+        setTitle={setByoTitle}
+        orientation={byoOrientation}
+        setOrientation={setByoOrientation}
+        uploading={byoUploading}
+        error={byoError}
+        onFiles={handleByoFiles}
+      />
+
+      {draft && draft.variations.length > 0 && (
         <VariationsPanel
           draft={draft}
           selected={selected}
@@ -462,6 +539,103 @@ function PastRuns({ runs }: { runs: RunSummary[] }) {
           ))}
         </div>
       )}
+    </div>
+  );
+}
+
+function ByoPanel({
+  hasRun,
+  title,
+  setTitle,
+  orientation,
+  setOrientation,
+  uploading,
+  error,
+  onFiles,
+}: {
+  hasRun: boolean;
+  title: string;
+  setTitle: (t: string) => void;
+  orientation: Orientation;
+  setOrientation: (o: Orientation) => void;
+  uploading: boolean;
+  error: string | null;
+  onFiles: (files: File[]) => void;
+}) {
+  function handlePaste(e: React.ClipboardEvent<HTMLDivElement>) {
+    const items = e.clipboardData?.items;
+    if (!items) return;
+    const files: File[] = [];
+    for (const item of items) {
+      if (item.type.startsWith("image/")) {
+        const file = item.getAsFile();
+        if (file) files.push(file);
+      }
+    }
+    if (files.length) onFiles(files);
+  }
+
+  function handleInput(e: React.ChangeEvent<HTMLInputElement>) {
+    const files = Array.from(e.target.files ?? []);
+    if (files.length) onFiles(files);
+    e.target.value = "";
+  }
+
+  return (
+    <div className="mt-10 paper px-5 py-5 print:hidden">
+      <div className="flex items-baseline justify-between mb-3">
+        <span className="label">Bring your own image</span>
+        <span className="marginalia">Made it yourself in Midjourney or another model? Drop it in here.</span>
+      </div>
+
+      {!hasRun && (
+        <div className="grid grid-cols-1 sm:grid-cols-12 gap-4 mb-4">
+          <div className="sm:col-span-8">
+            <label className="label block mb-2" htmlFor="byo-title">Title for this run</label>
+            <input
+              id="byo-title"
+              type="text"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="lighthouse at sunset"
+              className="w-full paper-cool rounded-none px-4 py-3 body-serif text-[14px] text-ink placeholder:text-ink-dim focus:outline-none focus:ring-1 focus:ring-ink/30"
+            />
+          </div>
+          <div className="sm:col-span-4">
+            <label className="label block mb-2" htmlFor="byo-orientation">Orientation</label>
+            <select
+              id="byo-orientation"
+              value={orientation}
+              onChange={(e) => setOrientation(e.target.value as Orientation)}
+              className="w-full paper-cool rounded-none px-4 py-3 body-serif text-[14px] text-ink focus:outline-none focus:ring-1 focus:ring-ink/30"
+            >
+              <option value="portrait">Portrait</option>
+              <option value="landscape">Landscape</option>
+            </select>
+          </div>
+        </div>
+      )}
+
+      <div
+        tabIndex={0}
+        onPaste={handlePaste}
+        className="paper-cool px-5 py-8 text-center outline-none focus:ring-1 focus:ring-ink/30 cursor-text"
+      >
+        <p className="marginalia mb-3">Click here, then paste (Ctrl+V) an image — or choose a file</p>
+        <label className="ghost-btn inline-flex cursor-pointer">
+          {uploading ? "Uploading…" : "Choose image(s)"}
+          <input
+            type="file"
+            accept="image/png,image/jpeg"
+            multiple
+            onChange={handleInput}
+            disabled={uploading}
+            className="hidden"
+          />
+        </label>
+      </div>
+
+      {error && <p className="marginalia text-terra mt-3">{error}</p>}
     </div>
   );
 }

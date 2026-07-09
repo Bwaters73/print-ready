@@ -21,7 +21,7 @@ export async function POST(req: Request) {
     );
   }
 
-  let body: { concept?: string; wildcardPreset?: string };
+  let body: { concept?: string; wildcardPreset?: string; houseStyleName?: string };
   try {
     body = await req.json();
   } catch {
@@ -34,7 +34,10 @@ export async function POST(req: Request) {
 
   const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
   const settings = loadArtworkSettings();
-  const houseStyle = settings.houseStyle;
+  const houseStyle =
+    settings.houseStyles.find((s) => s.name === body.houseStyleName) ??
+    settings.houseStyles.find((s) => s.name === settings.defaultHouseStyleName) ??
+    settings.houseStyles[0];
   const wildcardPresets = settings.wildcardPresets;
 
   // If the user picked a specific wildcard style up front, pin the tool schema's enum

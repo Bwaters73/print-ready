@@ -16,11 +16,27 @@ export async function PUT(req: Request) {
     return NextResponse.json({ error: "Invalid JSON body." }, { status: 400 });
   }
 
-  const houseStyle = body.houseStyle;
+  const houseStyles = body.houseStyles;
   const wildcardPresets = body.wildcardPresets;
-  if (!houseStyle || !houseStyle.name?.trim() || !houseStyle.description?.trim()) {
-    return NextResponse.json({ error: "House style needs a name and description." }, { status: 400 });
+  if (!Array.isArray(houseStyles) || houseStyles.length === 0) {
+    return NextResponse.json({ error: "Keep at least one house style." }, { status: 400 });
   }
+  const cleanStyles = houseStyles
+    .map((s) => ({
+      name: (s.name || "").trim(),
+      description: (s.description || "").trim(),
+      antiContentGuard: (s.antiContentGuard || "").trim(),
+      refs: Array.isArray(s.refs) ? s.refs : [],
+    }))
+    .filter((s) => s.name && s.description);
+  if (cleanStyles.length === 0) {
+    return NextResponse.json({ error: "Each house style needs a name and description." }, { status: 400 });
+  }
+  const names = new Set(cleanStyles.map((s) => s.name));
+  if (names.size !== cleanStyles.length) {
+    return NextResponse.json({ error: "House style names must be unique." }, { status: 400 });
+  }
+
   if (!Array.isArray(wildcardPresets) || wildcardPresets.length === 0) {
     return NextResponse.json({ error: "Keep at least one wildcard preset." }, { status: 400 });
   }
@@ -31,13 +47,13 @@ export async function PUT(req: Request) {
     return NextResponse.json({ error: "Keep at least one wildcard preset with a name and description." }, { status: 400 });
   }
 
+  const defaultHouseStyleName = cleanStyles.some((s) => s.name === body.defaultHouseStyleName)
+    ? (body.defaultHouseStyleName as string)
+    : cleanStyles[0].name;
+
   const settings: ArtworkSettings = {
-    houseStyle: {
-      name: houseStyle.name.trim(),
-      description: houseStyle.description.trim(),
-      antiContentGuard: (houseStyle.antiContentGuard || "").trim(),
-      refs: Array.isArray(houseStyle.refs) ? houseStyle.refs : [],
-    },
+    houseStyles: cleanStyles,
+    defaultHouseStyleName,
     wildcardPresets: cleanPresets,
   };
   saveArtworkSettings(settings);

@@ -46,6 +46,7 @@ export type WildcardPreset = {
 };
 
 export type ArtworkSettings = {
-  houseStyle: HouseStyleSettings;
+  houseStyles: HouseStyleSettings[];
+  defaultHouseStyleName: string; // must match one of houseStyles[].name
   wildcardPresets: WildcardPreset[];
 };

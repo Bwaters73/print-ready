@@ -19,22 +19,26 @@ export const USER_REF_STYLE_GUARD =
 
 // Seed/fallback values — used only until the user saves their own Style Settings
 // (see lib/artwork-settings.ts), which is what draft-prompts/route.ts actually reads.
-export const DEFAULT_HOUSE_STYLE = {
-  name: "Plein-air tonal oil",
-  description:
-    "painted as a small late-19th-century plein-air oil sketch on panel — somber muted tonal " +
-    "palette of olive green, ochre, slate grey, umber and warm stone, soft grey overcast sky, " +
-    "heavy textured impasto and visible directional palette-knife strokes, low contrast, " +
-    "restrained and atmospheric, antique muted panel finish",
-  antiContentGuard:
-    "replicate ONLY the brushwork, palette, muted tone and panel texture of the reference — do " +
-    "NOT include any farmhouse, buildings, cypress trees, or other content from the reference; " +
-    "render the requested subject only",
-  refs: [
-    ".claude/skills/artwork-orchestrator/references/style-refs/plein-air-tonal-oil/ref-farmhouse.png",
-    ".claude/skills/artwork-orchestrator/references/style-refs/plein-air-tonal-oil/ref-mountains.png",
-  ],
-};
+export const DEFAULT_HOUSE_STYLE_NAME = "Plein-air tonal oil";
+
+export const DEFAULT_HOUSE_STYLES = [
+  {
+    name: "Plein-air tonal oil",
+    description:
+      "painted as a small late-19th-century plein-air oil sketch on panel — somber muted tonal " +
+      "palette of olive green, ochre, slate grey, umber and warm stone, soft grey overcast sky, " +
+      "heavy textured impasto and visible directional palette-knife strokes, low contrast, " +
+      "restrained and atmospheric, antique muted panel finish",
+    antiContentGuard:
+      "replicate ONLY the brushwork, palette, muted tone and panel texture of the reference — do " +
+      "NOT include any farmhouse, buildings, cypress trees, or other content from the reference; " +
+      "render the requested subject only",
+    refs: [
+      ".claude/skills/artwork-orchestrator/references/style-refs/plein-air-tonal-oil/ref-farmhouse.png",
+      ".claude/skills/artwork-orchestrator/references/style-refs/plein-air-tonal-oil/ref-mountains.png",
+    ],
+  },
+];
 
 export const DEFAULT_WILDCARD_PRESETS: { name: string; layer: string }[] = [
   { name: "Japandi", layer: "matte minimalist, warm neutral palette (oatmeal, clay, soft black), negative space, natural light, fine grain, calm" },

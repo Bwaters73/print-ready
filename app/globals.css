@@ -1,0 +1,393 @@
+@import url("https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT@9..144,300..900,0..100&family=Newsreader:ital,opsz,wght@0,6..72,300..700;1,6..72,300..700&family=JetBrains+Mono:wght@400;500;600&display=swap");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* Dark "Inkwell" theme — warm near-black ground, cream foreground */
+  --paper: #100d0a;        /* page background — deep walnut ink */
+  --paper-warm: #1a1612;   /* lifted card surface */
+  --paper-cool: #15110d;   /* alternate surface */
+  --ink: #f3eada;          /* primary text — warm cream */
+  --ink-soft: #e2d7be;     /* slightly dimmer body */
+  --ink-mid: #b8ac90;      /* labels, hints — passes AA */
+  --ink-dim: #948869;      /* faint — eyebrows, dividers */
+  --terra: #e2683a;        /* primary accent — brightened rust */
+  --terra-deep: #b94f24;   /* button shadow */
+  --forest: #9ab86a;       /* positive numbers — luminous moss */
+  --ochre: #e5b542;        /* warn */
+  --slate: #8a9eb3;        /* cool neutral */
+}
+
+@layer base {
+  html {
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    font-feature-settings: "kern", "liga", "calt";
+  }
+  body {
+    background:
+      radial-gradient(
+        ellipse 85% 55% at 50% 0%,
+        rgba(226, 104, 58, 0.09) 0%,
+        transparent 55%
+      ),
+      radial-gradient(
+        ellipse 65% 45% at 85% 85%,
+        rgba(154, 184, 106, 0.06) 0%,
+        transparent 55%
+      ),
+      var(--paper);
+    color: var(--ink);
+    font-family: "Newsreader", ui-serif, Georgia, serif;
+    font-optical-sizing: auto;
+    font-size: 16px;
+    line-height: 1.55;
+  }
+  ::selection {
+    background: var(--ink);
+    color: var(--paper);
+  }
+  /* Reset number input spinners */
+  input[type="number"]::-webkit-outer-spin-button,
+  input[type="number"]::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+  input[type="number"] {
+    -moz-appearance: textfield;
+  }
+}
+
+@layer components {
+  /* Typography classes */
+  .display {
+    font-family: "Fraunces", ui-serif, Georgia, serif;
+    font-variation-settings:
+      "opsz" 144,
+      "SOFT" 30,
+      "wght" 400;
+    letter-spacing: -0.035em;
+    line-height: 0.92;
+  }
+  .display-italic {
+    font-family: "Fraunces", ui-serif, Georgia, serif;
+    font-style: italic;
+    font-variation-settings:
+      "opsz" 144,
+      "SOFT" 100,
+      "wght" 350;
+    letter-spacing: -0.03em;
+  }
+  .section-head {
+    font-family: "Fraunces", ui-serif, Georgia, serif;
+    font-variation-settings:
+      "opsz" 72,
+      "SOFT" 20,
+      "wght" 500;
+    letter-spacing: -0.02em;
+    line-height: 1;
+  }
+  .body-serif {
+    font-family: "Newsreader", ui-serif, Georgia, serif;
+    font-feature-settings: "ss03", "ss04";
+  }
+  .mono {
+    font-family: "JetBrains Mono", ui-monospace, monospace;
+    font-feature-settings: "tnum", "ss01", "ss02";
+  }
+  .tnum {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum";
+  }
+  .label {
+    font-family: "JetBrains Mono", ui-monospace, monospace;
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    color: var(--ink-mid);
+    font-weight: 500;
+  }
+  .label-ink {
+    font-family: "JetBrains Mono", ui-monospace, monospace;
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    color: var(--ink-soft);
+    font-weight: 600;
+  }
+
+  /* Surfaces */
+  .paper {
+    background: var(--paper-warm);
+    border: 1px solid rgba(241, 232, 211, 0.08);
+    box-shadow:
+      0 1px 0 rgba(0, 0, 0, 0.4),
+      0 12px 32px -16px rgba(0, 0, 0, 0.6),
+      inset 0 1px 0 rgba(241, 232, 211, 0.04);
+  }
+  .paper-cool {
+    background: var(--paper-cool);
+    border: 1px solid rgba(241, 232, 211, 0.06);
+  }
+
+  /* Decorative rules */
+  .rule {
+    height: 1px;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(241, 232, 211, 0.25) 15%,
+      rgba(241, 232, 211, 0.25) 85%,
+      transparent
+    );
+  }
+  .rule-solid {
+    border-top: 1px solid rgba(241, 232, 211, 0.15);
+  }
+  .rule-double {
+    border-top: 1px solid rgba(241, 232, 211, 0.2);
+    border-bottom: 1px solid rgba(241, 232, 211, 0.2);
+    padding: 6px 0;
+  }
+  .ornament {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    color: var(--ink-dim);
+  }
+  .ornament::before,
+  .ornament::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: rgba(241, 232, 211, 0.15);
+  }
+
+  /* Drop cap for editorial body */
+  .drop-cap::first-letter {
+    font-family: "Fraunces", ui-serif, Georgia, serif;
+    font-variation-settings:
+      "opsz" 144,
+      "SOFT" 40,
+      "wght" 500;
+    float: left;
+    font-size: 4.2em;
+    line-height: 0.85;
+    padding: 0.08em 0.08em 0 0;
+    color: var(--terra);
+  }
+
+  /* Ink-stamp chip */
+  .stamp {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: "JetBrains Mono", ui-monospace, monospace;
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+    padding: 5px 9px 4px;
+    border: 1px solid currentColor;
+    color: var(--ink-soft);
+    background: transparent;
+    border-radius: 2px;
+    line-height: 1;
+  }
+  .stamp-terra { color: var(--terra); }
+  .stamp-forest { color: var(--forest); }
+  .stamp-ochre { color: var(--ochre); }
+  .stamp-slate { color: var(--slate); }
+
+  /* Press button — cream stamp on dark page */
+  .press-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    font-family: "JetBrains Mono", ui-monospace, monospace;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+    padding: 13px 22px 12px;
+    background: var(--ink);
+    color: var(--paper);
+    border: none;
+    border-radius: 0;
+    transition: all 200ms cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow:
+      0 2px 0 var(--terra-deep),
+      0 4px 14px -2px rgba(226, 104, 58, 0.25);
+    cursor: pointer;
+  }
+  .press-btn:hover:not(:disabled) {
+    transform: translateY(-1px);
+    background: var(--ink-soft);
+    box-shadow:
+      0 3px 0 var(--terra-deep),
+      0 10px 24px -4px rgba(226, 104, 58, 0.35);
+  }
+  .press-btn:active:not(:disabled) {
+    transform: translateY(1px);
+    box-shadow: 0 0 0 var(--terra-deep);
+  }
+  .press-btn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+    box-shadow: none;
+  }
+
+  /* Ghost / line button */
+  .ghost-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-family: "JetBrains Mono", ui-monospace, monospace;
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+    padding: 8px 14px 7px;
+    color: var(--ink-soft);
+    background: transparent;
+    border: 1px solid rgba(241, 232, 211, 0.25);
+    border-radius: 2px;
+    transition: all 150ms;
+    cursor: pointer;
+  }
+  .ghost-btn:hover {
+    background: var(--ink);
+    color: var(--paper);
+    border-color: var(--ink);
+  }
+
+  /* Page-load reveal */
+  .reveal {
+    opacity: 0;
+    transform: translateY(8px);
+    animation: reveal 700ms cubic-bezier(0.2, 0, 0.13, 1) forwards;
+  }
+  .reveal-1 { animation-delay: 100ms; }
+  .reveal-2 { animation-delay: 220ms; }
+  .reveal-3 { animation-delay: 340ms; }
+  .reveal-4 { animation-delay: 460ms; }
+  @keyframes reveal {
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* Text ticker for numbers */
+  .roll {
+    display: inline-block;
+    animation: roll 350ms cubic-bezier(0.2, 0, 0.13, 1);
+  }
+  @keyframes roll {
+    0% { opacity: 0; transform: translateY(6px); }
+    100% { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Pulse for loading */
+  @keyframes type-pulse {
+    0%, 100% { opacity: 0.35; }
+    50% { opacity: 1; }
+  }
+
+  /* Paper grain — light specks on dark, soft screen blend */
+  .grain::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 100;
+    opacity: 0.25;
+    background-image:
+      radial-gradient(rgba(241, 232, 211, 0.08) 0.7px, transparent 0.7px),
+      radial-gradient(rgba(241, 232, 211, 0.05) 0.5px, transparent 0.5px);
+    background-size: 3px 3px, 5px 5px;
+    background-position: 0 0, 1.5px 1px;
+    mix-blend-mode: screen;
+  }
+
+  /* Vertical rule */
+  .vrule {
+    width: 1px;
+    background: linear-gradient(
+      180deg,
+      transparent,
+      rgba(241, 232, 211, 0.18) 15%,
+      rgba(241, 232, 211, 0.18) 85%,
+      transparent
+    );
+  }
+
+  /* Marginalia — small italic note */
+  .marginalia {
+    font-family: "Newsreader", ui-serif, Georgia, serif;
+    font-style: italic;
+    font-size: 15px;
+    color: var(--ink-mid);
+    line-height: 1.5;
+  }
+}
+
+textarea::-webkit-scrollbar { width: 6px; }
+textarea::-webkit-scrollbar-thumb {
+  background: rgba(241, 232, 211, 0.15);
+}
+textarea::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* Print — the site theme is a dark "Inkwell" palette; for print we flip to
+   black-on-white and drop the chrome, but keep the semantic accent colors
+   (verdict/risk/positioning borders) since they carry real meaning. */
+@media print {
+  @page {
+    margin: 0.6in;
+  }
+
+  body {
+    background: white !important;
+  }
+
+  main, main * {
+    color: #17140f !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
+  }
+
+  main .paper,
+  main .paper-cool {
+    border: 1px solid #ccc !important;
+    break-inside: avoid;
+  }
+
+  main a {
+    color: #17140f !important;
+    text-decoration: underline;
+  }
+
+  main section,
+  main header,
+  main article {
+    break-inside: avoid;
+  }
+
+  main .text-terra,
+  main .stamp-terra,
+  main .border-terra,
+  main .display-italic.text-terra { color: #b94f24 !important; border-color: #b94f24 !important; }
+  main .text-forest,
+  main .stamp-forest,
+  main .border-forest { color: #6f8a48 !important; border-color: #6f8a48 !important; }
+  main .text-ochre,
+  main .stamp-ochre,
+  main .border-ochre { color: #a87f1f !important; border-color: #a87f1f !important; }
+  main .text-slate,
+  main .border-slate { color: #45607a !important; border-color: #45607a !important; }
+}

@@ -1,0 +1,21 @@
+node_modules
+.next
+out
+.env
+.env.local
+.env*.local
+*.log
+.DS_Store
+.vscode
+.idea
+next-env.d.ts
+tsconfig.tsbuildinfo
+
+# Artwork pipeline (Python tool, secrets/venv/generated output stay local)
+tooling/ad-creatives/.venv/
+tooling/upscale/
+tooling/digital-product-research/
+artwork-runs/
+__pycache__/
+*.pyc
+*.env

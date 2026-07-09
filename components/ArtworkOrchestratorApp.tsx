@@ -51,6 +51,20 @@ function imageUrl(run: string, rel: string): string {
   return `/api/artwork/image?run=${encodeURIComponent(run)}&rel=${encodeURIComponent(rel)}`;
 }
 
+/** Reads a fetch Response as JSON, but if the body isn't valid JSON (e.g. a raw
+ * "413 Request Entity Too Large" text page from a server/proxy in front of the app),
+ * throws a clear error with the status code and a snippet of the real body instead
+ * of letting JSON.parse's opaque "Unexpected token" bubble up. */
+async function parseJsonResponse(res: Response): Promise<any> {
+  const text = await res.text();
+  try {
+    return JSON.parse(text);
+  } catch {
+    const snippet = text.slice(0, 200).trim() || "(empty body)";
+    throw new Error(`Server returned a non-JSON response (HTTP ${res.status}): ${snippet}`);
+  }
+}
+
 export default function ArtworkOrchestratorApp() {
   const [preflight, setPreflight] = useState<{ ok: boolean; lines: string[] } | null>(null);
   const [pastRuns, setPastRuns] = useState<RunSummary[]>([]);
@@ -98,7 +112,7 @@ export default function ArtworkOrchestratorApp() {
 
   async function refreshCandidates(runSlug: string) {
     const res = await fetch(`/api/artwork/candidates?run=${encodeURIComponent(runSlug)}`);
-    const data = await res.json();
+    const data = await parseJsonResponse(res);
     setCandidates(data.candidates ?? []);
   }
 
@@ -121,7 +135,7 @@ export default function ArtworkOrchestratorApp() {
           headers: { "content-type": "application/json" },
           body: JSON.stringify({ concept: byoTitle.trim(), orientation: byoOrientation }),
         });
-        const data = await res.json();
+        const data = await parseJsonResponse(res);
         if (!res.ok) {
           setByoError(data.error || "Could not start a run.");
           setByoUploading(false);
@@ -149,7 +163,7 @@ export default function ArtworkOrchestratorApp() {
         form.append("runSlug", runSlug);
         form.append("label", "custom");
         const res = await fetch("/api/artwork/upload", { method: "POST", body: form });
-        const data = await res.json();
+        const data = await parseJsonResponse(res);
         if (!res.ok) {
           setByoError(data.error || `Upload failed for ${file.name}.`);
         }
@@ -178,7 +192,7 @@ export default function ArtworkOrchestratorApp() {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ concept: concept.trim() }),
       });
-      const data = await res.json();
+      const data = await parseJsonResponse(res);
       if (!res.ok) {
         setDraftError(data.error || "Something went wrong.");
         return;
@@ -216,7 +230,7 @@ export default function ArtworkOrchestratorApp() {
           model,
         }),
       });
-      const data = await res.json();
+      const data = await parseJsonResponse(res);
       if (!res.ok) {
         setGenStatus((s) => ({ ...s, [key]: "error" }));
         setGenError((s) => ({ ...s, [key]: data.error || "Generation failed." }));
@@ -267,7 +281,7 @@ export default function ArtworkOrchestratorApp() {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ concept, prompt: usedPrompt }),
       });
-      const data = await res.json();
+      const data = await parseJsonResponse(res);
       if (!res.ok) {
         updateKeeper(file, { draftingSeo: false, seoError: data.error || "Failed to draft SEO." });
         return;
@@ -310,7 +324,7 @@ export default function ArtworkOrchestratorApp() {
           seo: keeper.seo,
         }),
       });
-      const data = await res.json();
+      const data = await parseJsonResponse(res);
       if (!res.ok) {
         updateKeeper(file, { finalizing: false, finalizeError: data.error || "Finalize failed." });
         return;
@@ -334,7 +348,7 @@ export default function ArtworkOrchestratorApp() {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ runSlug: draft.runSlug }),
       });
-      const data = await res.json();
+      const data = await parseJsonResponse(res);
       if (!res.ok) {
         setIndexError(data.error || "Index build failed.");
         return;

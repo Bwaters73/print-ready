@@ -32,3 +32,20 @@ export type FinalizedPiece = {
   folder: string;
   prints: string[]; // filenames inside <slug>/prints/
 };
+
+export type HouseStyleSettings = {
+  name: string;
+  description: string;
+  antiContentGuard: string;
+  refs: string[]; // project-root-relative paths
+};
+
+export type WildcardPreset = {
+  name: string;
+  layer: string;
+};
+
+export type ArtworkSettings = {
+  houseStyle: HouseStyleSettings;
+  wildcardPresets: WildcardPreset[];
+};

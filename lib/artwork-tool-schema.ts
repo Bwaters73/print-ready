@@ -1,45 +1,46 @@
 import type Anthropic from "@anthropic-ai/sdk";
-import { QUICK_PRESETS } from "@/lib/artwork-presets";
 
-export const DRAFT_VARIATIONS_TOOL: Anthropic.Tool = {
-  name: "submit_variations",
-  description:
-    "Submit the three print-art prompt variations for a concept: faithful, signature, and wildcard.",
-  input_schema: {
-    type: "object",
-    required: ["orientation", "faithfulSubject", "signatureSubject", "wildcardPreset", "wildcardSubject"],
-    properties: {
-      orientation: {
-        type: "string",
-        enum: ["portrait", "landscape"],
-        description: "Which orientation best suits this concept as wall art.",
-      },
-      faithfulSubject: {
-        type: "string",
-        description:
-          "The concept rendered straight — a rich, print-oriented descriptive phrase (subject, mood, light, " +
-          "detail). Do NOT include any 'no text / no frame / no watermark' boilerplate — that is appended separately.",
-      },
-      signatureSubject: {
-        type: "string",
-        description:
-          "The SAME concept phrased as a subject only (mood, light, composition) — this will be combined with " +
-          "a fixed house-style art-direction block server-side, so do not describe painting style/medium here.",
-      },
-      wildcardPreset: {
-        type: "string",
-        enum: QUICK_PRESETS.map((p) => p.name),
-        description: "Pick ONE preset for a deliberate reinterpretation that surfaces a surprise.",
-      },
-      wildcardSubject: {
-        type: "string",
-        description:
-          "The concept reimagined for the chosen wildcard preset — a rich descriptive phrase. Do NOT include " +
-          "the 'no text / no frame' boilerplate — that is appended separately.",
+export function buildDraftVariationsTool(presetNames: string[]): Anthropic.Tool {
+  return {
+    name: "submit_variations",
+    description:
+      "Submit the three print-art prompt variations for a concept: faithful, signature, and wildcard.",
+    input_schema: {
+      type: "object",
+      required: ["orientation", "faithfulSubject", "signatureSubject", "wildcardPreset", "wildcardSubject"],
+      properties: {
+        orientation: {
+          type: "string",
+          enum: ["portrait", "landscape"],
+          description: "Which orientation best suits this concept as wall art.",
+        },
+        faithfulSubject: {
+          type: "string",
+          description:
+            "The concept rendered straight — a rich, print-oriented descriptive phrase (subject, mood, light, " +
+            "detail). Do NOT include any 'no text / no frame / no watermark' boilerplate — that is appended separately.",
+        },
+        signatureSubject: {
+          type: "string",
+          description:
+            "The SAME concept phrased as a subject only (mood, light, composition) — this will be combined with " +
+            "a fixed house-style art-direction block server-side, so do not describe painting style/medium here.",
+        },
+        wildcardPreset: {
+          type: "string",
+          enum: presetNames,
+          description: "Pick ONE preset for a deliberate reinterpretation that surfaces a surprise.",
+        },
+        wildcardSubject: {
+          type: "string",
+          description:
+            "The concept reimagined for the chosen wildcard preset — a rich descriptive phrase. Do NOT include " +
+            "the 'no text / no frame' boilerplate — that is appended separately.",
+        },
       },
     },
-  },
-};
+  };
+}
 
 export const DRAFT_SEO_TOOL: Anthropic.Tool = {
   name: "submit_seo",

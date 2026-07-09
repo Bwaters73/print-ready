@@ -17,7 +17,9 @@ export const USER_REF_STYLE_GUARD =
   "image's specific subject, objects, or composition; render the requested subject only, as a new " +
   "and different image in that style.";
 
-export const HOUSE_STYLE = {
+// Seed/fallback values — used only until the user saves their own Style Settings
+// (see lib/artwork-settings.ts), which is what draft-prompts/route.ts actually reads.
+export const DEFAULT_HOUSE_STYLE = {
   name: "Plein-air tonal oil",
   description:
     "painted as a small late-19th-century plein-air oil sketch on panel — somber muted tonal " +
@@ -34,7 +36,7 @@ export const HOUSE_STYLE = {
   ],
 };
 
-export const QUICK_PRESETS: { name: string; layer: string }[] = [
+export const DEFAULT_WILDCARD_PRESETS: { name: string; layer: string }[] = [
   { name: "Japandi", layer: "matte minimalist, warm neutral palette (oatmeal, clay, soft black), negative space, natural light, fine grain, calm" },
   { name: "Vintage botanical", layer: "antique lithograph / engraving style, aged parchment tones, precise linework, muted sage & sepia, subtle foxing" },
   { name: "Mid-century abstract", layer: "bold geometric shapes, 1950s palette (mustard, teal, burnt orange, cream), flat matte color, clean hard edges" },

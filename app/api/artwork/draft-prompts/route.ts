@@ -2,8 +2,9 @@ import "@/lib/load-env";
 import Anthropic from "@anthropic-ai/sdk";
 import { NextResponse } from "next/server";
 import { createWithRetry } from "@/lib/with-retry";
-import { DRAFT_VARIATIONS_TOOL } from "@/lib/artwork-tool-schema";
-import { HOUSE_STYLE, NO_TEXT_SPINE, QUICK_PRESETS } from "@/lib/artwork-presets";
+import { buildDraftVariationsTool } from "@/lib/artwork-tool-schema";
+import { NO_TEXT_SPINE } from "@/lib/artwork-presets";
+import { loadArtworkSettings } from "@/lib/artwork-settings";
 import { uniqueSlug } from "@/lib/artwork-run";
 import type { DraftPromptsResult, Orientation, VariationKey } from "@/lib/artwork-types";
 
@@ -32,6 +33,9 @@ export async function POST(req: Request) {
   }
 
   const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+  const settings = loadArtworkSettings();
+  const houseStyle = settings.houseStyle;
+  const wildcardPresets = settings.wildcardPresets;
 
   try {
     const response = await createWithRetry(client, {
@@ -48,7 +52,7 @@ export async function POST(req: Request) {
           cache_control: { type: "ephemeral" },
         },
       ],
-      tools: [DRAFT_VARIATIONS_TOOL],
+      tools: [buildDraftVariationsTool(wildcardPresets.map((p) => p.name))],
       tool_choice: { type: "tool", name: "submit_variations" },
       messages: [{ role: "user", content: `Concept: ${concept}` }],
     });
@@ -68,7 +72,7 @@ export async function POST(req: Request) {
       wildcardSubject: string;
     };
 
-    const preset = QUICK_PRESETS.find((p) => p.name === input.wildcardPreset) ?? QUICK_PRESETS[0];
+    const preset = wildcardPresets.find((p) => p.name === input.wildcardPreset) ?? wildcardPresets[0];
 
     const variations: { key: VariationKey; label: string; prompt: string; refs: string[] }[] = [
       {
@@ -79,10 +83,12 @@ export async function POST(req: Request) {
       },
       {
         key: "signature",
-        label: `Signature — ${HOUSE_STYLE.name}`,
+        label: `Signature — ${houseStyle.name}`,
         prompt:
-          `${input.signatureSubject}, ${HOUSE_STYLE.description}, ${HOUSE_STYLE.antiContentGuard} — ${NO_TEXT_SPINE}`,
-        refs: HOUSE_STYLE.refs,
+          `${input.signatureSubject}, ${houseStyle.description}` +
+          (houseStyle.antiContentGuard ? `, ${houseStyle.antiContentGuard}` : "") +
+          ` — ${NO_TEXT_SPINE}`,
+        refs: houseStyle.refs,
       },
       {
         key: "wildcard",

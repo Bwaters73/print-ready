@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Shell from "./Shell";
 import { MODELS, SIZES, USER_REF_STYLE_GUARD } from "@/lib/artwork-presets";
 import type {
+  ArtworkSettings,
   Candidate,
   DraftPromptsResult,
   FinalizedPiece,
@@ -108,9 +109,20 @@ export default function ArtworkOrchestratorApp() {
   const [byoUploading, setByoUploading] = useState(false);
   const [byoError, setByoError] = useState<string | null>(null);
 
+  const [styleOpen, setStyleOpen] = useState(false);
+  const [styleDraft, setStyleDraft] = useState<ArtworkSettings | null>(null);
+  const [styleSaving, setStyleSaving] = useState(false);
+  const [styleError, setStyleError] = useState<string | null>(null);
+  const [styleSaved, setStyleSaved] = useState(false);
+  const [styleRefUploading, setStyleRefUploading] = useState(false);
+
   useEffect(() => {
     fetch("/api/artwork/preflight").then((r) => r.json()).then(setPreflight).catch(() => {});
     refreshPastRuns();
+    fetch("/api/artwork/settings")
+      .then((r) => r.json())
+      .then((d) => setStyleDraft(d.settings))
+      .catch(() => {});
   }, []);
 
   function refreshPastRuns() {
@@ -118,6 +130,61 @@ export default function ArtworkOrchestratorApp() {
       .then((r) => r.json())
       .then((d) => setPastRuns(d.runs ?? []))
       .catch(() => {});
+  }
+
+  async function handleSaveStyleSettings() {
+    if (!styleDraft) return;
+    setStyleSaving(true);
+    setStyleError(null);
+    setStyleSaved(false);
+    try {
+      const res = await fetch("/api/artwork/settings", {
+        method: "PUT",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(styleDraft),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setStyleError(data.error || "Could not save style settings.");
+        return;
+      }
+      setStyleDraft(data.settings);
+      setStyleSaved(true);
+    } catch (err) {
+      setStyleError(err instanceof Error ? err.message : "Network error.");
+    } finally {
+      setStyleSaving(false);
+    }
+  }
+
+  async function handleUploadStyleRef(file: File) {
+    if (!styleDraft) return;
+    setStyleRefUploading(true);
+    setStyleError(null);
+    try {
+      const form = new FormData();
+      form.append("file", file);
+      form.append("styleName", styleDraft.houseStyle.name || "custom-style");
+      const res = await fetch("/api/artwork/settings/upload-ref", { method: "POST", body: form });
+      const data = await res.json();
+      if (!res.ok) {
+        setStyleError(data.error || "Upload failed.");
+        return;
+      }
+      setStyleDraft((prev) =>
+        prev ? { ...prev, houseStyle: { ...prev.houseStyle, refs: [...prev.houseStyle.refs, data.path] } } : prev,
+      );
+    } catch (err) {
+      setStyleError(err instanceof Error ? err.message : "Network error.");
+    } finally {
+      setStyleRefUploading(false);
+    }
+  }
+
+  function handleRemoveStyleRef(refPath: string) {
+    setStyleDraft((prev) =>
+      prev ? { ...prev, houseStyle: { ...prev.houseStyle, refs: prev.houseStyle.refs.filter((r) => r !== refPath) } } : prev,
+    );
   }
 
   async function refreshCandidates(runSlug: string) {
@@ -458,6 +525,20 @@ export default function ArtworkOrchestratorApp() {
 
       {pastRuns.length > 0 && <PastRuns runs={pastRuns} />}
 
+      <StyleSettingsPanel
+        open={styleOpen}
+        setOpen={setStyleOpen}
+        draft={styleDraft}
+        setDraft={setStyleDraft}
+        saving={styleSaving}
+        error={styleError}
+        saved={styleSaved}
+        onSave={handleSaveStyleSettings}
+        refUploading={styleRefUploading}
+        onUploadRef={handleUploadStyleRef}
+        onRemoveRef={handleRemoveStyleRef}
+      />
+
       <form onSubmit={handleDraft} className="mt-12 grid grid-cols-12 gap-6 reveal reveal-2 print:hidden">
         <div className="col-span-12 lg:col-span-8 space-y-2">
           <label className="label block mb-2" htmlFor="artwork-concept">
@@ -638,6 +719,180 @@ function PastRuns({ runs }: { runs: RunSummary[] }) {
               )}
             </div>
           ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function styleRefImageUrl(refPath: string): string {
+  return `/api/artwork/settings/ref-image?path=${encodeURIComponent(refPath)}`;
+}
+
+function StyleSettingsPanel({
+  open,
+  setOpen,
+  draft,
+  setDraft,
+  saving,
+  error,
+  saved,
+  onSave,
+  refUploading,
+  onUploadRef,
+  onRemoveRef,
+}: {
+  open: boolean;
+  setOpen: (o: boolean) => void;
+  draft: ArtworkSettings | null;
+  setDraft: React.Dispatch<React.SetStateAction<ArtworkSettings | null>>;
+  saving: boolean;
+  error: string | null;
+  saved: boolean;
+  onSave: () => void;
+  refUploading: boolean;
+  onUploadRef: (file: File) => void;
+  onRemoveRef: (refPath: string) => void;
+}) {
+  if (!draft) return null;
+
+  function updatePreset(i: number, patch: Partial<{ name: string; layer: string }>) {
+    setDraft((prev) => {
+      if (!prev) return prev;
+      const next = prev.wildcardPresets.slice();
+      next[i] = { ...next[i], ...patch };
+      return { ...prev, wildcardPresets: next };
+    });
+  }
+
+  function addPreset() {
+    setDraft((prev) => (prev ? { ...prev, wildcardPresets: [...prev.wildcardPresets, { name: "", layer: "" }] } : prev));
+  }
+
+  function removePreset(i: number) {
+    setDraft((prev) => (prev ? { ...prev, wildcardPresets: prev.wildcardPresets.filter((_, idx) => idx !== i) } : prev));
+  }
+
+  return (
+    <div className="mt-10 print:hidden">
+      <button
+        type="button"
+        onClick={() => setOpen(!open)}
+        className="label flex items-center gap-2 hover:text-ink"
+      >
+        <span>{open ? "▾" : "▸"}</span> Style settings
+      </button>
+
+      {open && (
+        <div className="mt-4 paper px-5 py-5 space-y-8">
+          <div>
+            <div className="label mb-3">Signature house style (default for every run)</div>
+            <div className="grid grid-cols-1 sm:grid-cols-12 gap-4 mb-3">
+              <div className="sm:col-span-4">
+                <label className="label block mb-2">Name</label>
+                <input
+                  type="text"
+                  value={draft.houseStyle.name}
+                  onChange={(e) => setDraft({ ...draft, houseStyle: { ...draft.houseStyle, name: e.target.value } })}
+                  className="w-full paper-cool rounded-none px-3 py-2 body-serif text-[14px] text-ink focus:outline-none focus:ring-1 focus:ring-ink/30"
+                />
+              </div>
+            </div>
+            <div className="mb-3">
+              <label className="label block mb-2">Style description (appended to the signature prompt)</label>
+              <textarea
+                value={draft.houseStyle.description}
+                onChange={(e) => setDraft({ ...draft, houseStyle: { ...draft.houseStyle, description: e.target.value } })}
+                rows={3}
+                className="w-full paper-cool rounded-none px-3 py-2 body-serif text-[13px] text-ink-soft resize-y focus:outline-none focus:ring-1 focus:ring-ink/30"
+              />
+            </div>
+            <div className="mb-4">
+              <label className="label block mb-2">Anti-content guard (optional, only needed if you attach reference images)</label>
+              <textarea
+                value={draft.houseStyle.antiContentGuard}
+                onChange={(e) => setDraft({ ...draft, houseStyle: { ...draft.houseStyle, antiContentGuard: e.target.value } })}
+                rows={2}
+                placeholder="replicate ONLY the style/palette/texture of the reference — do not include its specific content; render the requested subject only"
+                className="w-full paper-cool rounded-none px-3 py-2 body-serif text-[13px] text-ink-soft placeholder:text-ink-dim resize-y focus:outline-none focus:ring-1 focus:ring-ink/30"
+              />
+            </div>
+            <div>
+              <label className="label block mb-2">Reference images (grounds the Signature variation's brushwork/palette)</label>
+              <div className="flex flex-wrap gap-3 mb-3">
+                {draft.houseStyle.refs.map((r) => (
+                  <div key={r} className="relative">
+                    <img src={styleRefImageUrl(r)} alt="Style reference" className="w-20 h-20 object-cover border border-ink/20" />
+                    <button
+                      type="button"
+                      onClick={() => onRemoveRef(r)}
+                      className="absolute -top-2 -right-2 w-5 h-5 flex items-center justify-center bg-ink text-paper text-xs"
+                      aria-label="Remove reference"
+                    >
+                      ×
+                    </button>
+                  </div>
+                ))}
+              </div>
+              <label className="ghost-btn inline-flex cursor-pointer">
+                {refUploading ? "Uploading…" : "Add reference image"}
+                <input
+                  type="file"
+                  accept="image/png,image/jpeg"
+                  disabled={refUploading}
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) onUploadRef(file);
+                    e.target.value = "";
+                  }}
+                  className="hidden"
+                />
+              </label>
+            </div>
+          </div>
+
+          <div>
+            <div className="label mb-3">Wildcard presets (the model picks one per run)</div>
+            <div className="space-y-3">
+              {draft.wildcardPresets.map((p, i) => (
+                <div key={i} className="grid grid-cols-1 sm:grid-cols-12 gap-2 items-start">
+                  <input
+                    type="text"
+                    value={p.name}
+                    onChange={(e) => updatePreset(i, { name: e.target.value })}
+                    placeholder="Name"
+                    className="sm:col-span-3 paper-cool rounded-none px-3 py-2 body-serif text-[13px] text-ink placeholder:text-ink-dim focus:outline-none focus:ring-1 focus:ring-ink/30"
+                  />
+                  <input
+                    type="text"
+                    value={p.layer}
+                    onChange={(e) => updatePreset(i, { layer: e.target.value })}
+                    placeholder="Art-direction layer (medium, palette, light, finish)"
+                    className="sm:col-span-8 paper-cool rounded-none px-3 py-2 body-serif text-[13px] text-ink-soft placeholder:text-ink-dim focus:outline-none focus:ring-1 focus:ring-ink/30"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => removePreset(i)}
+                    className="sm:col-span-1 ghost-btn justify-center"
+                    aria-label={`Remove ${p.name || "preset"}`}
+                  >
+                    ×
+                  </button>
+                </div>
+              ))}
+            </div>
+            <button type="button" onClick={addPreset} className="ghost-btn mt-3">
+              + Add preset
+            </button>
+          </div>
+
+          <div className="flex items-center gap-4">
+            <button type="button" onClick={onSave} disabled={saving} className="press-btn disabled:opacity-40">
+              {saving ? "Saving…" : "Save Style Settings"}
+            </button>
+            {saved && !saving && <span className="stamp stamp-forest">Saved</span>}
+          </div>
+          {error && <p className="marginalia text-terra">{error}</p>}
         </div>
       )}
     </div>

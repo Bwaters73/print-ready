@@ -340,13 +340,24 @@ export default function ArtworkOrchestratorApp() {
     setRefImage(null);
     setRefError(null);
     try {
+      // Send the full selected objects (not just names) — the dropdowns show whatever's
+      // currently in styleDraft, which may include edits/additions not saved yet, so the
+      // server must use these directly rather than re-looking them up in persisted settings.
+      const houseStyleOverride = houseStyleChoice
+        ? styleDraft?.houseStyles.find((s) => s.name === houseStyleChoice)
+        : undefined;
+      const wildcardPresetOverride = wildcardChoice
+        ? styleDraft?.wildcardPresets.find((p) => p.name === wildcardChoice)
+        : undefined;
       const res = await fetch("/api/artwork/draft-prompts", {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
           concept: concept.trim(),
           wildcardPreset: wildcardChoice || undefined,
+          wildcardPresetOverride,
           houseStyleName: houseStyleChoice || undefined,
+          houseStyleOverride,
         }),
       });
       const data = await parseJsonResponse(res);

@@ -6,7 +6,7 @@ import { buildDraftVariationsTool } from "@/lib/artwork-tool-schema";
 import { NO_TEXT_SPINE } from "@/lib/artwork-presets";
 import { loadArtworkSettings } from "@/lib/artwork-settings";
 import { uniqueSlug } from "@/lib/artwork-run";
-import type { DraftPromptsResult, Orientation, VariationKey } from "@/lib/artwork-types";
+import type { DraftPromptsResult, HouseStyleSettings, Orientation, VariationKey, WildcardPreset } from "@/lib/artwork-types";
 
 export const runtime = "nodejs";
 export const maxDuration = 120;
@@ -21,7 +21,17 @@ export async function POST(req: Request) {
     );
   }
 
-  let body: { concept?: string; wildcardPreset?: string; houseStyleName?: string };
+  let body: {
+    concept?: string;
+    wildcardPreset?: string;
+    houseStyleName?: string;
+    // Full objects for whatever's currently selected in the UI's pickers, which may
+    // include in-progress edits the user hasn't clicked "Save Style Settings" for yet.
+    // These take priority over the *-Name lookups (which only see persisted settings)
+    // so the picker always reflects what's actually selected, not what's been saved.
+    houseStyleOverride?: Partial<HouseStyleSettings> & { name: string };
+    wildcardPresetOverride?: WildcardPreset;
+  };
   try {
     body = await req.json();
   } catch {
@@ -34,15 +44,27 @@ export async function POST(req: Request) {
 
   const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
   const settings = loadArtworkSettings();
-  const houseStyle =
-    settings.houseStyles.find((s) => s.name === body.houseStyleName) ??
-    settings.houseStyles.find((s) => s.name === settings.defaultHouseStyleName) ??
-    settings.houseStyles[0];
+  const houseStyle: HouseStyleSettings =
+    body.houseStyleOverride && body.houseStyleOverride.name && body.houseStyleOverride.description
+      ? {
+          name: body.houseStyleOverride.name,
+          description: body.houseStyleOverride.description,
+          antiContentGuard: body.houseStyleOverride.antiContentGuard || "",
+          refs: body.houseStyleOverride.refs || [],
+        }
+      : settings.houseStyles.find((s) => s.name === body.houseStyleName) ??
+        settings.houseStyles.find((s) => s.name === settings.defaultHouseStyleName) ??
+        settings.houseStyles[0];
   const wildcardPresets = settings.wildcardPresets;
 
   // If the user picked a specific wildcard style up front, pin the tool schema's enum
   // to just that one so Claude always returns it (instead of choosing on its own).
-  const forcedPreset = wildcardPresets.find((p) => p.name === body.wildcardPreset);
+  // The override object (live UI selection) takes priority over a name looked up in
+  // persisted settings, for the same reason as houseStyleOverride above.
+  const forcedPreset =
+    body.wildcardPresetOverride && body.wildcardPresetOverride.name && body.wildcardPresetOverride.layer
+      ? body.wildcardPresetOverride
+      : wildcardPresets.find((p) => p.name === body.wildcardPreset);
   const presetNamesForTool = forcedPreset ? [forcedPreset.name] : wildcardPresets.map((p) => p.name);
 
   try {
@@ -80,7 +102,8 @@ export async function POST(req: Request) {
       wildcardSubject: string;
     };
 
-    const preset = wildcardPresets.find((p) => p.name === input.wildcardPreset) ?? wildcardPresets[0];
+    const preset =
+      forcedPreset ?? wildcardPresets.find((p) => p.name === input.wildcardPreset) ?? wildcardPresets[0];
 
     const variations: { key: VariationKey; label: string; prompt: string; refs: string[] }[] = [
       {

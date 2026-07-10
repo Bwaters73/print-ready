@@ -1,10 +1,19 @@
 {
-  "houseStyle": {
-    "name": "Plein-air tonal oil",
-    "description": "painted as a small late-19th-century plein-air oil sketch on panel — somber muted tonal palette of olive green, ochre, slate grey, umber and warm stone, soft grey overcast sky, heavy textured impasto and visible directional palette-knife strokes, low contrast, restrained and atmospheric, antique muted panel finish",
-    "antiContentGuard": "",
-    "refs": []
-  },
+  "houseStyles": [
+    {
+      "name": "Plein-air tonal oil",
+      "description": "painted as a small late-19th-century plein-air oil sketch on panel — somber muted tonal palette of olive green, ochre, slate grey, umber and warm stone, soft grey overcast sky, heavy textured impasto and visible directional palette-knife strokes, low contrast, restrained and atmospheric, antique muted panel finish",
+      "antiContentGuard": "",
+      "refs": []
+    },
+    {
+      "name": "Nostalgic Glow",
+      "description": "rendered with a nostalgic, sun-faded vintage quality — deep moody shadows pooling in the corners and background, contrasted against soft, bright, airy pockets of glowing light breaking through, warm sepia-tinged color grading, gentle film grain, soft-focus romantic haze, evokes a cherished old photograph or a half-remembered summer afternoon, dramatic chiaroscuro balanced by luminous highlight blooms, warm faded patina",
+      "antiContentGuard": "",
+      "refs": []
+    }
+  ],
+  "defaultHouseStyleName": "Plein-air tonal oil",
   "wildcardPresets": [
     {
       "name": "Japandi",
@@ -45,6 +54,10 @@
     {
       "name": "Watercolor",
       "layer": "Traditional watercolor painting with transparent layers of hand-applied pigments, soft flowing washes, delicate color transitions, subtle wet-on-wet blending, expressive brushstrokes, organic paint blooms, feathered edges, natural granulation, and visible cold-pressed watercolor paper texture. The artwork has luminous colors created through transparent glazing rather than opaque paint, producing a light, airy, handcrafted appearance with soft atmospheric depth and gentle imperfections."
+    },
+    {
+      "name": "Minimalist Botanical",
+      "layer": "Clean, airy plant or flower art with simple stems, leaves, olive branches, ferns, or pressed-flower silhouettes. Popular for bedrooms, bathrooms, nurseries, and modern neutral homes. Etsy’s own marketplace language connects this style with serene decor, delicate pressed flowers, abstract leaves, and tranquil olive branches"
     }
   ]
 }

@@ -65,11 +65,20 @@ export const MODELS = [
   { alias: "midjourney", label: "Midjourney (via your proxy — no --ref support yet)" },
 ];
 
+// Capped well under Windows' ~260-char MAX_PATH — a long concept/title (a whole
+// paragraph, say) would otherwise become a folder name that, combined with the
+// project path and subfolders, blows past that limit and fails with WinError 3.
+const SLUG_MAX_LEN = 60;
+
 export function slugify(text: string): string {
   const cleaned = text
     .replace(/[—–]/g, "-")
     .replace(/[^\w\s-]/g, "")
     .trim()
     .toLowerCase();
-  return cleaned.replace(/[\s_-]+/g, "-") || "untitled";
+  const slug = cleaned.replace(/[\s_-]+/g, "-") || "untitled";
+  if (slug.length <= SLUG_MAX_LEN) return slug;
+  const truncated = slug.slice(0, SLUG_MAX_LEN);
+  const lastDash = truncated.lastIndexOf("-");
+  return lastDash > 20 ? truncated.slice(0, lastDash) : truncated;
 }

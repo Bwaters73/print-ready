@@ -53,10 +53,21 @@ GENERATE_PY = "tooling/ad-creatives/generate.py"
 
 
 # ---------------------------------------------------------------- helpers
+# Capped well under Windows' ~260-char MAX_PATH — a long title/concept (a whole
+# paragraph, say) would otherwise become a folder name that, combined with the
+# project path and subfolders, blows past that limit and fails with WinError 3.
+SLUG_MAX_LEN = 60
+
+
 def slugify(text: str) -> str:
     text = re.sub(r"[—–]", "-", text)
     text = re.sub(r"[^\w\s-]", "", text).strip().lower()
-    return re.sub(r"[\s_-]+", "-", text) or "untitled"
+    slug = re.sub(r"[\s_-]+", "-", text) or "untitled"
+    if len(slug) <= SLUG_MAX_LEN:
+        return slug
+    truncated = slug[:SLUG_MAX_LEN]
+    last_dash = truncated.rfind("-")
+    return truncated[:last_dash] if last_dash > 20 else truncated
 
 
 def find_upscaler():

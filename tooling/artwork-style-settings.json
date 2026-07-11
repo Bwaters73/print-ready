@@ -11,6 +11,12 @@
       "description": "rendered with a nostalgic, sun-faded vintage quality — deep moody shadows pooling in the corners and background, contrasted against soft, bright, airy pockets of glowing light breaking through, warm sepia-tinged color grading, gentle film grain, soft-focus romantic haze, evokes a cherished old photograph or a half-remembered summer afternoon, dramatic chiaroscuro balanced by luminous highlight blooms, warm faded patina",
       "antiContentGuard": "",
       "refs": []
+    },
+    {
+      "name": "Abstract art",
+      "description": "Modern abstract wall art featuring expressive organic shapes, layered brushstrokes, softly blended color fields, subtle visual texture, balanced asymmetrical composition, contemporary gallery aesthetic, sophisticated color harmony, painterly depth, clean negative space, and an upscale interior-design feel.",
+      "antiContentGuard": "",
+      "refs": []
     }
   ],
   "defaultHouseStyleName": "Plein-air tonal oil",
@@ -21,7 +27,7 @@
     },
     {
       "name": "Vintage botanical",
-      "layer": "antique lithograph / engraving style, aged parchment tones, precise linework, muted sage & sepia, subtle foxing"
+      "layer": "Botanical wall art consistently appears across Etsy bestseller searches, including fern sets, wildflower illustrations, vintage herbarium prints, watercolor bouquets, floral line drawings, and modern botanical designs. One visible botanical set showed more than 5,000 reviews, while a vintage French-country set showed over 35,000."
     },
     {
       "name": "Mid-century abstract",
@@ -65,11 +71,31 @@
     },
     {
       "name": "Abstract",
-      "layer": "This is probably the broadest and most commercially flexible art style on Etsy. Etsy’s own abstract wall art page describes the category as covering everything from serene Japandi landscapes to minimalist gold feather prints, with digital prints, paintings, giclée prints, and wall decor all represented"
+      "layer": "Modern abstract wall art featuring expressive organic shapes, layered brushstrokes, softly blended color fields, subtle visual texture, balanced asymmetrical composition, contemporary gallery aesthetic, sophisticated color harmony, painterly depth, clean negative space, and an upscale interior-design feel."
     },
     {
       "name": "Boho",
       "layer": "Boho"
+    },
+    {
+      "name": "Vintage Wall Art",
+      "layer": "Vintage European oil painting inspired by nineteenth-century fine art, with softly aged pigments, visible painterly brushwork, muted earthy colors, gentle chiaroscuro lighting, atmospheric depth, slightly darkened varnish, romantic realism, antique canvas texture, and the appearance of a carefully preserved museum painting."
+    },
+    {
+      "name": "Minimalist",
+      "layer": "Refined minimalist wall art using a limited color palette, clean geometric or organic forms, intentional negative space, simple balanced composition, understated texture, delicate visual rhythm, crisp edges, quiet sophistication, and a calm contemporary gallery aesthetic."
+    },
+    {
+      "name": "Mid-century modern",
+      "layer": "Mid-century modern illustration inspired by 1950s and 1960s graphic design, featuring bold geometric forms, stylized organic shapes, simplified silhouettes, flat color blocking, mustard yellow, burnt orange, olive green, teal, and warm cream, subtle screen-print texture, playful balance, and a sophisticated retro composition."
+    },
+    {
+      "name": "Natural abstract art",
+      "layer": "Sophisticated neutral abstract art composed of warm beige, ivory, taupe, sand, muted brown, charcoal, and soft greige, with layered organic forms, plaster-like texture, restrained brushwork, subtle tonal contrast, generous negative space, and a quiet-luxury interior aesthetic."
+    },
+    {
+      "name": "Landscape and Nature Art",
+      "layer": "Atmospheric fine-art landscape featuring layered natural scenery, soft directional light, convincing depth, subtle mist, harmonious earth-toned colors, painterly foliage, carefully framed composition, serene mood, and a timeless connection to the outdoors."
     }
   ]
 }
